@@ -1,4 +1,3 @@
-import os
 import base64
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -17,8 +16,10 @@ def get_encryption_key():
     if isinstance(secret, str):
         secret = secret.encode()
     
-    # Use a fixed salt for key derivation (in production, store this securely)
-    salt = b'password_manager_salt_v1'
+    # Get salt from configuration (can be set via environment variable)
+    salt_str = current_app.config.get('ENCRYPTION_SALT', 'password_manager_salt_v1')
+    salt = salt_str.encode() if isinstance(salt_str, str) else salt_str
+    
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,

@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
@@ -6,6 +7,18 @@ from app.forms import LoginForm, RegistrationForm, PasswordForm, EditPasswordFor
 from app.crypto import encrypt_password, decrypt_password
 
 main = Blueprint('main', __name__)
+
+
+def is_safe_url(target):
+    """Check if the URL is safe for redirecting."""
+    if not target:
+        return False
+    # Parse the target URL
+    parsed = urlparse(target)
+    # Only allow relative URLs (no scheme and no netloc)
+    # This prevents protocol-relative URLs like //evil.com
+    # and absolute URLs like http://evil.com
+    return not parsed.scheme and not parsed.netloc and parsed.path.startswith('/')
 
 
 @main.route('/')
@@ -31,8 +44,8 @@ def login():
         
         login_user(user)
         next_page = request.args.get('next')
-        # Security: only allow relative URLs
-        if next_page and not next_page.startswith('/'):
+        # Security: validate redirect URL to prevent open redirect attacks
+        if not is_safe_url(next_page):
             next_page = None
         return redirect(next_page or url_for('main.dashboard'))
     
