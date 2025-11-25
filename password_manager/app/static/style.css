@@ -1,3 +1,9 @@
+/* CSS Custom Properties */
+:root {
+    --rainbow-gradient: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+    --rainbow-bg-size: 200% 100%;
+}
+
 /* Base styles */
 * {
     box-sizing: border-box;
@@ -160,42 +166,41 @@ body {
     cursor: pointer;
     text-decoration: none;
     text-align: center;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: transform 0.1s, filter 0.2s;
+    background: var(--rainbow-gradient);
+    background-size: var(--rainbow-bg-size);
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn:hover {
     transform: translateY(-1px);
+    filter: brightness(1.1);
+    animation: rainbow-shift 1s ease infinite;
 }
 
 .btn:active {
     transform: translateY(0);
 }
 
-.btn-primary {
-    background-color: #3498db;
-    color: white;
+@keyframes rainbow-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-.btn-primary:hover {
-    background-color: #2980b9;
-}
-
-.btn-secondary {
-    background-color: #95a5a6;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #7f8c8d;
-}
-
+.btn-primary,
+.btn-secondary,
 .btn-danger {
-    background-color: #e74c3c;
+    background: var(--rainbow-gradient);
+    background-size: var(--rainbow-bg-size);
     color: white;
 }
 
+.btn-primary:hover,
+.btn-secondary:hover,
 .btn-danger:hover {
-    background-color: #c0392b;
+    filter: brightness(1.1);
 }
 
 .btn-small {
@@ -376,16 +381,20 @@ body {
 .btn-copy {
     padding: 0.25rem 0.75rem;
     font-size: 0.75rem;
-    border: 1px solid #ddd;
+    border: none;
     border-radius: 4px;
-    background: white;
+    background: var(--rainbow-gradient);
+    background-size: var(--rainbow-bg-size);
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: transform 0.1s, filter 0.2s;
 }
 
 .btn-toggle:hover,
 .btn-copy:hover {
-    background-color: #f5f5f5;
+    filter: brightness(1.1);
+    animation: rainbow-shift 1s ease infinite;
 }
 
 /* Footer */
