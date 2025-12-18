@@ -32,6 +32,20 @@ freevideos/
 pip install -r requirements.txt
 ```
 
+## Quick Start (Demo Mode)
+
+To quickly test the video player with demo videos:
+
+```bash
+# Create demo videos
+python create_demo_videos.py
+
+# Run the video player
+python video_player.py
+```
+
+This will create 9 test videos (3 per channel) for demonstration purposes.
+
 ## Usage
 
 1. Create the folder structure with your video files:
