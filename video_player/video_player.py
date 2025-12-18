@@ -14,6 +14,12 @@ from pathlib import Path
 class VideoPlayer:
     """Video player that manages channel-based video playback"""
     
+    # Class constants
+    DEFAULT_WIDTH = 800
+    DEFAULT_HEIGHT = 600
+    MAX_FPS = 120
+    DEFAULT_FPS = 30
+    
     def __init__(self, root_folder='freevideos'):
         """
         Initialize the video player
@@ -22,9 +28,10 @@ class VideoPlayer:
             root_folder: Root folder containing channel subfolders
         """
         pygame.init()
+        pygame.font.init()
         
         # Set up display
-        self.screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode((self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Video Player")
         
         # Configuration
@@ -41,7 +48,7 @@ class VideoPlayer:
         self.video_capture = None
         self.is_playing = False
         self.videos_in_channel = []
-        self.current_video_fps = 30
+        self.current_video_fps = self.DEFAULT_FPS
         
         # Initialize first channel
         self.load_channel(self.current_channel_index)
@@ -118,8 +125,8 @@ class VideoPlayer:
             
             # Get video properties
             self.current_video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
-            if self.current_video_fps == 0 or self.current_video_fps > 120:
-                self.current_video_fps = 30  # Default fallback
+            if self.current_video_fps == 0 or self.current_video_fps > self.MAX_FPS:
+                self.current_video_fps = self.DEFAULT_FPS  # Default fallback
             
             self.is_playing = True
         except Exception as e:
@@ -148,23 +155,26 @@ class VideoPlayer:
     
     def show_no_video_message(self):
         """Display a message when no videos are available"""
-        font = pygame.font.Font(None, 36)
-        self.screen.fill((0, 0, 0))
-        
-        channel_name = self.channels[self.current_channel_index]
-        text = font.render(f"No videos in {channel_name}", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(self.screen.get_width() // 2, 
-                                          self.screen.get_height() // 2))
-        self.screen.blit(text, text_rect)
-        
-        instruction = pygame.font.Font(None, 24)
-        inst_text = instruction.render("Use UP/DOWN arrows to switch channels", 
-                                      True, (200, 200, 200))
-        inst_rect = inst_text.get_rect(center=(self.screen.get_width() // 2, 
-                                               self.screen.get_height() // 2 + 50))
-        self.screen.blit(inst_text, inst_rect)
-        
-        pygame.display.flip()
+        try:
+            font = pygame.font.Font(None, 36)
+            self.screen.fill((0, 0, 0))
+            
+            channel_name = self.channels[self.current_channel_index]
+            text = font.render(f"No videos in {channel_name}", True, (255, 255, 255))
+            text_rect = text.get_rect(center=(self.screen.get_width() // 2, 
+                                              self.screen.get_height() // 2))
+            self.screen.blit(text, text_rect)
+            
+            instruction = pygame.font.Font(None, 24)
+            inst_text = instruction.render("Use UP/DOWN arrows to switch channels", 
+                                          True, (200, 200, 200))
+            inst_rect = inst_text.get_rect(center=(self.screen.get_width() // 2, 
+                                                   self.screen.get_height() // 2 + 50))
+            self.screen.blit(inst_text, inst_rect)
+            
+            pygame.display.flip()
+        except Exception as e:
+            print(f"Error displaying message: {e}")
     
     def update_video_frame(self):
         """Read and display the current video frame"""
@@ -242,7 +252,7 @@ class VideoPlayer:
             running = self.handle_events()
             if running:
                 self.update_video_frame()
-                self.clock.tick(self.current_video_fps if self.is_playing else 30)
+                self.clock.tick(self.current_video_fps if self.is_playing else self.DEFAULT_FPS)
         
         # Cleanup
         if self.video_capture:
