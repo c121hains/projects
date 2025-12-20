@@ -1,10 +1,11 @@
 # Video Player
 
-A Python-based video player that plays video files from organized channel subfolders with keyboard navigation.
+A Python-based video player that plays video files with audio from organized channel subfolders with keyboard navigation.
 
 ## Features
 
-- Plays video files with extensions: `.mkv`, `.avi`, `.mp4`
+- Plays video files with audio support
+- Supported extensions: `.mkv`, `.avi`, `.mp4`
 - Organizes videos in channel subfolders (`channel1`, `channel2`, `channel3`)
 - Sequential playback with automatic looping
 - Keyboard controls for channel switching
@@ -85,7 +86,7 @@ python video_player.py /path/to/your/videos
 
 - Python 3.7+
 - pygame 2.5.2
-- opencv-python 4.8.1.78
+- ffpyplayer 4.5.3
 
 ## Troubleshooting
 
@@ -94,6 +95,7 @@ If the video player doesn't start:
 - Check that video files are in the correct format (MKV, AVI, MP4)
 - Verify the folder structure exists
 
-If videos don't play:
-- Check that the video codec is supported by OpenCV
-- Try re-encoding problematic videos
+If videos don't play or audio is missing:
+- Check that the video codec is supported by ffpyplayer
+- Ensure audio stream is present in the video file
+- Try re-encoding problematic videos with ffmpeg

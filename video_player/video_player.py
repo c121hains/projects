@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Video Player - Plays video files from organized channel subfolders
+Video Player - Plays video files with audio from organized channel subfolders
 Supports MKV, AVI, and MP4 file formats
 """
 
 import os
 import sys
+import time
 import pygame
-import cv2
+from ffpyplayer.player import MediaPlayer
 from pathlib import Path
 
 
@@ -45,7 +46,7 @@ class VideoPlayer:
         self.clock = pygame.time.Clock()
         
         # Video state
-        self.video_capture = None
+        self.media_player = None
         self.is_playing = False
         self.videos_in_channel = []
         self.current_video_fps = self.DEFAULT_FPS
@@ -110,8 +111,9 @@ class VideoPlayer:
             return
         
         # Clean up previous video
-        if self.video_capture:
-            self.video_capture.release()
+        if self.media_player:
+            self.media_player.close_player()
+            self.media_player = None
         
         self.current_video_index = video_index
         video_path = self.videos_in_channel[video_index]
@@ -119,14 +121,22 @@ class VideoPlayer:
         print(f"Playing: {os.path.basename(video_path)}")
         
         try:
-            self.video_capture = cv2.VideoCapture(video_path)
-            if not self.video_capture.isOpened():
-                raise Exception("Could not open video file")
+            # Create MediaPlayer with audio enabled
+            self.media_player = MediaPlayer(video_path, ff_opts={'paused': False, 'autoexit': False})
             
-            # Get video properties
-            self.current_video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+            # Get video metadata
+            metadata = self.media_player.get_metadata()
+            frame_rate = metadata.get('frame_rate', (self.DEFAULT_FPS, 1))
+            
+            # Calculate FPS from frame rate tuple (numerator, denominator)
+            if frame_rate and isinstance(frame_rate, tuple) and len(frame_rate) == 2 and frame_rate[1] != 0:
+                self.current_video_fps = frame_rate[0] / frame_rate[1]
+            else:
+                self.current_video_fps = self.DEFAULT_FPS
+            
+            # Limit to max FPS
             if self.current_video_fps == 0 or self.current_video_fps > self.MAX_FPS:
-                self.current_video_fps = self.DEFAULT_FPS  # Default fallback
+                self.current_video_fps = self.DEFAULT_FPS
             
             self.is_playing = True
         except Exception as e:
@@ -178,22 +188,34 @@ class VideoPlayer:
     
     def update_video_frame(self):
         """Read and display the current video frame"""
-        if not self.is_playing or not self.video_capture:
+        if not self.is_playing or not self.media_player:
             return True
         
-        ret, frame = self.video_capture.read()
+        # Get frame from media player
+        frame, val = self.media_player.get_frame()
         
-        if not ret:
+        if val == 'eof':
             # Video finished, play next
             self.play_next_video()
             return True
         
-        # Convert frame from BGR to RGB
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if frame is None:
+            # No frame available yet, continue
+            return True
+        
+        # Extract image and timestamp
+        img, pts = frame
+        
+        # Get frame dimensions
+        frame_width, frame_height = img.get_size()
+        frame_data = img.to_bytearray()[0]
+        
+        # Convert frame data to pygame surface
+        # ffpyplayer returns RGB24 format by default
+        surface = pygame.image.frombuffer(frame_data, (frame_width, frame_height), 'RGB')
         
         # Resize frame to fit screen while maintaining aspect ratio
         screen_width, screen_height = self.screen.get_size()
-        frame_height, frame_width = frame.shape[:2]
         
         # Calculate scaling
         scale = min(screen_width / frame_width, screen_height / frame_height)
@@ -201,11 +223,7 @@ class VideoPlayer:
         new_height = int(frame_height * scale)
         
         if scale != 1.0:
-            frame = cv2.resize(frame, (new_width, new_height))
-        
-        # Convert to pygame surface
-        frame = frame.swapaxes(0, 1)
-        surface = pygame.surfarray.make_surface(frame)
+            surface = pygame.transform.scale(surface, (new_width, new_height))
         
         # Center the video on screen
         x = (screen_width - new_width) // 2
@@ -214,6 +232,13 @@ class VideoPlayer:
         self.screen.fill((0, 0, 0))
         self.screen.blit(surface, (x, y))
         pygame.display.flip()
+        
+        # Sleep only if recommended by ffpyplayer for sync
+        # This is necessary to maintain proper audio/video synchronization
+        # val represents the delay needed before fetching the next frame
+        if val > 0:
+            # Cap sleep time to avoid UI freezing
+            time.sleep(min(val, 0.1))
         
         return True
     
@@ -252,11 +277,13 @@ class VideoPlayer:
             running = self.handle_events()
             if running:
                 self.update_video_frame()
-                self.clock.tick(self.current_video_fps if self.is_playing else self.DEFAULT_FPS)
+                # Use minimal tick to keep the UI responsive
+                # The actual frame timing is handled by time.sleep in update_video_frame
+                self.clock.tick(60)
         
         # Cleanup
-        if self.video_capture:
-            self.video_capture.release()
+        if self.media_player:
+            self.media_player.close_player()
         pygame.quit()
         print("Video Player Closed")
 

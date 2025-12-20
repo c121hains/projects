@@ -1,51 +1,111 @@
 #!/usr/bin/env python3
 """
-Demo Script - Creates sample test videos for testing the video player
+Demo Script - Creates sample test videos with audio for testing the video player
 """
 
 import os
-import cv2
-import numpy as np
+import subprocess
+import sys
 
 
-def create_test_video(filepath, duration_seconds=5, fps=30, text="Test Video"):
+def create_test_video_with_audio(filepath, duration_seconds=5, text="Test Video"):
     """
-    Create a simple test video with text
+    Create a simple test video with text and audio using ffmpeg
     
     Args:
         filepath: Path to save the video
         duration_seconds: Duration of the video in seconds
-        fps: Frames per second
         text: Text to display on the video
     """
-    width, height = 640, 480
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    # Check if ffmpeg is available
+    try:
+        subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("Error: ffmpeg is not installed or not in PATH")
+        print("Please install ffmpeg to create demo videos with audio")
+        sys.exit(1)
     
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
+    # Generate video with lavfi (libavfilter) - generates a test pattern with sine wave audio
+    try:
+        # Create video with lavfi - generates a test pattern with sine wave audio
+        cmd = [
+            'ffmpeg', '-y',
+            '-f', 'lavfi',
+            '-i', f'color=c=blue:s=640x480:d={duration_seconds},format=rgb24',
+            '-f', 'lavfi',
+            '-i', f'sine=frequency=1000:duration={duration_seconds}',
+            '-vf', f"drawtext=text='{text}':fontsize=40:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2",
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+            '-shortest',
+            filepath
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"Warning: Could not create video with audio for {filepath}")
+            print(f"Error: {result.stderr}")
+            # Fallback: create without audio
+            create_test_video_no_audio(filepath, duration_seconds, text)
+        else:
+            print(f"Created: {filepath} (with audio)")
+            
+    except Exception as e:
+        print(f"Error creating video: {e}")
+        # Fallback: create without audio
+        create_test_video_no_audio(filepath, duration_seconds, text)
+
+
+def create_test_video_no_audio(filepath, duration_seconds=5, text="Test Video"):
+    """
+    Fallback: Create a simple test video without audio using opencv
     
-    total_frames = duration_seconds * fps
-    
-    for frame_num in range(total_frames):
-        # Create a frame with gradient background
-        frame = np.zeros((height, width, 3), dtype=np.uint8)
+    Args:
+        filepath: Path to save the video
+        duration_seconds: Duration of the video in seconds
+        text: Text to display on the video
+    """
+    try:
+        import cv2
+        import numpy as np
         
-        # Create gradient effect
-        for y in range(height):
-            color_value = int(255 * (y / height))
-            frame[y, :] = [color_value // 3, color_value // 2, color_value]
+        print(f"Creating video without audio: {filepath}")
         
-        # Add text
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(frame, text, (50, height // 2), font, 1.5, (255, 255, 255), 3)
+        width, height = 640, 480
+        fps = 30
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         
-        # Add frame counter
-        time_text = f"Frame: {frame_num}/{total_frames}"
-        cv2.putText(frame, time_text, (50, height - 50), font, 0.7, (200, 200, 200), 2)
+        out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
         
-        out.write(frame)
-    
-    out.release()
-    print(f"Created: {filepath}")
+        total_frames = duration_seconds * fps
+        
+        for frame_num in range(total_frames):
+            # Create a frame with gradient background
+            frame = np.zeros((height, width, 3), dtype=np.uint8)
+            
+            # Create gradient effect
+            for y in range(height):
+                color_value = int(255 * (y / height))
+                frame[y, :] = [color_value // 3, color_value // 2, color_value]
+            
+            # Add text
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(frame, text, (50, height // 2), font, 1.5, (255, 255, 255), 3)
+            
+            # Add frame counter
+            time_text = f"Frame: {frame_num}/{total_frames}"
+            cv2.putText(frame, time_text, (50, height - 50), font, 0.7, (200, 200, 200), 2)
+            
+            out.write(frame)
+        
+        out.release()
+        print(f"Created: {filepath} (no audio)")
+        
+    except ImportError:
+        print("Error: opencv-python not available for fallback video creation")
+        print("Please install ffmpeg or opencv-python")
+        sys.exit(1)
 
 
 def main():
@@ -58,7 +118,7 @@ def main():
         for i in range(1, 4):
             os.makedirs(os.path.join(root_folder, f'channel{i}'), exist_ok=True)
     
-    print("Creating demo videos...")
+    print("Creating demo videos with audio...")
     print()
     
     # Create videos for each channel
@@ -70,7 +130,7 @@ def main():
             filename = f"video_{video_num}.mp4"
             filepath = os.path.join(channel_path, filename)
             text = f"Channel {channel_num} - Video {video_num}"
-            create_test_video(filepath, duration_seconds=3, text=text)
+            create_test_video_with_audio(filepath, duration_seconds=3, text=text)
     
     print()
     print("Demo videos created successfully!")
