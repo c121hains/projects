@@ -129,7 +129,7 @@ class VideoPlayer:
             frame_rate = metadata.get('frame_rate', (self.DEFAULT_FPS, 1))
             
             # Calculate FPS from frame rate tuple (numerator, denominator)
-            if frame_rate and frame_rate[1] != 0:
+            if frame_rate and isinstance(frame_rate, tuple) and len(frame_rate) == 2 and frame_rate[1] != 0:
                 self.current_video_fps = frame_rate[0] / frame_rate[1]
             else:
                 self.current_video_fps = self.DEFAULT_FPS
@@ -233,9 +233,12 @@ class VideoPlayer:
         self.screen.blit(surface, (x, y))
         pygame.display.flip()
         
-        # Sleep for the recommended amount of time (val is the sleep duration)
+        # Sleep only if recommended by ffpyplayer for sync
+        # This is necessary to maintain proper audio/video synchronization
+        # val represents the delay needed before fetching the next frame
         if val > 0:
-            time.sleep(val)
+            # Cap sleep time to avoid UI freezing
+            time.sleep(min(val, 0.1))
         
         return True
     

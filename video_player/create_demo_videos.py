@@ -25,13 +25,9 @@ def create_test_video_with_audio(filepath, duration_seconds=5, text="Test Video"
         print("Please install ffmpeg to create demo videos with audio")
         sys.exit(1)
     
-    # Create a temporary video without audio first
-    temp_video = filepath + '.temp.mp4'
-    
-    # Generate video with color background and text overlay using ffmpeg
-    # This creates a video with a gradient background and text
+    # Generate video with lavfi (libavfilter) - generates a test pattern with sine wave audio
     try:
-        # Create video with lavfi (libavfilter) - generates a test pattern with sine wave audio
+        # Create video with lavfi - generates a test pattern with sine wave audio
         cmd = [
             'ffmpeg', '-y',
             '-f', 'lavfi',
