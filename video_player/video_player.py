@@ -10,7 +10,9 @@ import time
 import pygame
 from ffpyplayer.player import MediaPlayer
 from pathlib import Path
-
+from DBHandler import DbHandler
+from datetime import datetime
+from video_duration_sum import sum_folder_durations_seconds, report_folder_durations
 
 class VideoPlayer:
     """Video player that manages channel-based video playback"""
@@ -28,6 +30,9 @@ class VideoPlayer:
         Args:
             root_folder: Root folder containing channel subfolders
         """
+        # Get the current date and time
+        current_datetime = datetime.now()
+        
         pygame.init()
         pygame.font.init()
         
@@ -74,7 +79,7 @@ class VideoPlayer:
         if not os.path.exists(channel_path):
             print(f"Warning: Channel path '{channel_path}' does not exist")
             return []
-        
+
         videos = []
         for file in os.listdir(channel_path):
             file_path = os.path.join(channel_path, file)
@@ -306,6 +311,23 @@ def main():
         print("to the channel folders and run the player again.")
         return
     
+
+    db = DbHandler(".\\db\\showsequencer.db", enable_wal=True)
+    db.init_db()
+    print("Database initialized.")
+    print("All:", db.list_channels())
+
+    # Scan durations for your root folder (e.g., 'freevideos') before launching the player
+    summary = db.scan_and_store_durations(root_folder, channel_names=['channel1', 'channel2', 'channel3'],
+                                        recursive=False, use_stream_duration=False)
+
+    print(f"Files scanned: {summary['files_scanned']}")
+    print(f"Total duration: {summary['total_seconds']:.3f} s "
+        f"({summary['total_seconds']/60:.2f} min, {summary['total_seconds']/3600:.2f} h)")
+    for ch, secs in summary['by_channel'].items():
+        print(f"  {ch}: {secs:.3f} s ({secs/60:.2f} min)")
+
+
     # Start the player
     try:
         player = VideoPlayer(root_folder)
