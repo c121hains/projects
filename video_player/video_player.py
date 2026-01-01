@@ -128,21 +128,25 @@ class VideoPlayer:
         video_durations = [row["DurationSeconds"] for row in channel_results]
 
 
-        channel1_duration = self.summary['by_channel']['channel1']
-        time_to_play = time_to_seek_in_channel(channel1_duration)  # Example channel duration of 1 hour
-
-
+        channel_duration = self.summary['by_channel'][self.channels[channel_index]]
+        time_to_play = time_to_seek_in_channel(channel_duration)  # Example channel duration of 1 hour
 
         self.current_video_index = 0
-        
+        timeIndex = 0
+        for video_duration in video_durations:
+            timeIndex += video_duration
+            if time_to_play < timeIndex:
+                break
+            self.current_video_index += 1
+                
         if self.videos_in_channel:
             print(f"Loaded {self.channels[channel_index]}: {len(self.videos_in_channel)} videos")
-            self.play_video(0)
+            self.play_video(self.current_video_index, timeIndex - time_to_play)
         else:
             print(f"No videos found in {self.channels[channel_index]}")
             self.show_no_video_message()
     
-    def play_video(self, video_index):
+    def play_video(self, video_index, start_time=0):
         """
         Play a specific video by index
         
@@ -160,12 +164,18 @@ class VideoPlayer:
         self.current_video_index = video_index
         video_path = self.videos_in_channel[video_index]
         
-        print(f"Playing: {os.path.basename(video_path)}")
+        print(f"Playing: {os.path.basename(video_path)} starting at {start_time} seconds")
         
         try:
             # Create MediaPlayer with audio enabled
-            self.media_player = MediaPlayer(video_path, ff_opts={'paused': False, 'autoexit': False})
-            
+            self.media_player = MediaPlayer(
+                video_path, 
+                ff_opts={
+                    'paused': False, 
+                    'autoexit': False,
+                    'ss': start_time}  # Start at specified time
+            )
+
             # Get video metadata
             metadata = self.media_player.get_metadata()
             frame_rate = metadata.get('frame_rate', (self.DEFAULT_FPS, 1))
