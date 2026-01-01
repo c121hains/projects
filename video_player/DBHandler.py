@@ -224,3 +224,15 @@ class DbHandler:
             ORDER BY c.Name, v.FileName;
             """
             return [dict(r) for r in conn.execute(sql).fetchall()]
+        
+    def list_videos_by_channelId(self, channelId: int) -> list[dict]:
+        with self._connect() as conn:
+            sql = """
+            SELECT v.Path, v.DurationSeconds,
+                   v.SizeBytes, v.ModifiedAt, v.ScannedAt
+            FROM videos v
+            JOIN channels c ON c.Id = v.ChannelId
+            WHERE c.Id = ?
+            ORDER BY v.FileName;
+            """
+            return [dict(r) for r in conn.execute(sql, (channelId,)).fetchall()]
