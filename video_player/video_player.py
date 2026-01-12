@@ -72,17 +72,6 @@ class VideoPlayer:
         for ch, secs in self.summary['by_channel'].items():
             print(f"  {ch}: {secs:.3f} s ({secs/60:.2f} min)")
 
-        # Print just channel1 duration
-        channel1_duration = self.summary['by_channel']['channel1']
-        print(f"\nChannel1 duration: {channel1_duration:.3f} seconds")
-
-        timeSinceGoLive = time_since_golive()
-        print(f"Time since go-live : {timeSinceGoLive:.0f} seconds.")
-
-        time_to_play = time_to_seek_in_channel(channel1_duration)  # Example channel duration of 1 hour
-        print(f"Time to play for channel1: {time_to_play:.0f} seconds.")
-
-
         # Initialize first channel
         self.load_channel(self.current_channel_index)
         
@@ -127,21 +116,22 @@ class VideoPlayer:
         self.videos_in_channel = [row["Path"] for row in channel_results] #self.get_videos_from_channel(channel_index)
         video_durations = [row["DurationSeconds"] for row in channel_results]
 
-
         channel_duration = self.summary['by_channel'][self.channels[channel_index]]
-        time_to_play = time_to_seek_in_channel(channel_duration)  # Example channel duration of 1 hour
+        time_to_play_in_channel = time_to_seek_in_channel(channel_duration)  # Example channel duration of 1 hour
+        print(f"\nChannel: {self.channels[channel_index]}  |  Channel duration: {channel_duration:.3f} seconds  |  Time to play: {time_to_play_in_channel:.3f} seconds")
 
         self.current_video_index = 0
         timeIndex = 0
+        time_to_play_in_video = time_to_play_in_channel # initialize to total time to play in channel in case first video is longer than time to play
         for video_duration in video_durations:
             timeIndex += video_duration
-            if time_to_play < timeIndex:
+            if time_to_play_in_channel < timeIndex:
                 break
             self.current_video_index += 1
-                
+            time_to_play_in_video -= video_duration
+                            
         if self.videos_in_channel:
-            print(f"Loaded {self.channels[channel_index]}: {len(self.videos_in_channel)} videos")
-            self.play_video(self.current_video_index, timeIndex - time_to_play)
+            self.play_video(self.current_video_index, time_to_play_in_video)
         else:
             print(f"No videos found in {self.channels[channel_index]}")
             self.show_no_video_message()
@@ -164,7 +154,7 @@ class VideoPlayer:
         self.current_video_index = video_index
         video_path = self.videos_in_channel[video_index]
         
-        print(f"Playing: {os.path.basename(video_path)} starting at {start_time} seconds")
+        #print(f"Playing: {os.path.basename(video_path)} starting at {start_time} seconds")
         
         try:
             # Create MediaPlayer with audio enabled
