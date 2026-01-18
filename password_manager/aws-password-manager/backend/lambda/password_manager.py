@@ -46,11 +46,16 @@ def get_user_id_from_event(event):
 
 
 def cors_response(status_code, body):
-    """Generate response with CORS headers."""
+    """Generate response with CORS headers.
+    
+    IMPORTANT: In production, replace '*' with your specific S3 bucket URL or CloudFront domain.
+    Example: 'https://your-bucket-name.s3-website-us-east-1.amazonaws.com'
+    or 'https://your-domain.com'
+    """
     return {
         'statusCode': status_code,
         'headers': {
-            'Access-Control-Allow-Origin': '*',  # Configure this to your S3 bucket URL in production
+            'Access-Control-Allow-Origin': '*',  # TODO: Replace with your domain in production
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
             'Content-Type': 'application/json'

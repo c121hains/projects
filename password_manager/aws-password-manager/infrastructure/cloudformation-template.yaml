@@ -43,7 +43,6 @@ Resources:
           KeyType: RANGE
       SSESpecification:
         SSEEnabled: true
-        SSEType: KMS
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       Tags:

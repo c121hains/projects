@@ -24,8 +24,8 @@ function Register({ onRegisterSuccess, onSwitchToLogin }) {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters long');
       setIsLoading(false);
       return;
     }
@@ -132,9 +132,9 @@ function Register({ onRegisterSuccess, onSwitchToLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              minLength="8"
+              minLength="12"
             />
-            <small>Must be at least 8 characters</small>
+            <small>Must be at least 12 characters with uppercase, lowercase, numbers, and special characters</small>
           </div>
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password</label>
