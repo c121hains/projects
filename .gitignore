@@ -4,3 +4,11 @@ __pycache__/
 *.db
 .pytest_cache/
 video_player/freevideos/
+
+# AWS Password Manager specific
+password_manager/aws-password-manager/frontend/node_modules/
+password_manager/aws-password-manager/frontend/build/
+password_manager/aws-password-manager/frontend/.env
+password_manager/aws-password-manager/backend/lambda/*.zip
+*.pem
+*.key
