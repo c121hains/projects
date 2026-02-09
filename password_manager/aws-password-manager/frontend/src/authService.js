@@ -19,6 +19,10 @@ class AuthService {
         {
           Name: 'email',
           Value: email
+        },
+        {
+          Name: 'nickname',
+          Value: email
         }
       ];
 
