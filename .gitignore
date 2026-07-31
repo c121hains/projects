@@ -3,8 +3,6 @@ __pycache__/
 *.pyc
 *.db
 .pytest_cache/
-video_player/freevideos/
-
 # AWS Password Manager specific
 password_manager/aws-password-manager/frontend/node_modules/
 password_manager/aws-password-manager/frontend/build/
